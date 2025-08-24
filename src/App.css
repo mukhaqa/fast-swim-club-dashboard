@@ -1,42 +1,37 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/**
+ * Дополнительные стили для FastSwim приложения
+ * Основные стили определены в index.css через дизайн-систему
+ */
+
+/* Дополнительные утилиты для FastSwim */
+.swim-gradient {
+  background: var(--swim-gradient);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.swim-shadow {
+  box-shadow: var(--swim-shadow);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.swim-shadow-hover {
+  box-shadow: var(--swim-shadow-hover);
+}
+
+/* Анимации для плавательной темы */
+@keyframes swim-wave {
+  0%, 100% {
+    transform: translateY(0px);
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  50% {
+    transform: translateY(-5px);
   }
 }
 
-.card {
-  padding: 2em;
+.swim-wave {
+  animation: swim-wave 2s ease-in-out infinite;
 }
 
-.read-the-docs {
-  color: #888;
+/* Стили для фокуса */
+.focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
 }
