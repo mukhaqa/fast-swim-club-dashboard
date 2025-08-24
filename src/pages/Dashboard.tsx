@@ -27,14 +27,9 @@ const Dashboard = () => {
     const loadDashboardData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Загружаем данные параллельно
-        const [trainings, announcements, profile] = await Promise.all([
-          getUpcomingTrainings(),
-          getAnnouncements(),
-          getUserProfile()
-        ]);
-        
+        const [trainings, announcements, profile] = await Promise.all([getUpcomingTrainings(), getAnnouncements(), getUserProfile()]);
         setUpcomingTrainings(trainings.slice(0, 3)); // Показываем только первые 3 тренировки
         setRecentAnnouncements(announcements.slice(0, 2)); // Показываем только первые 2 объявления
         setUserProfile(profile);
@@ -44,13 +39,10 @@ const Dashboard = () => {
         setIsLoading(false);
       }
     };
-
     loadDashboardData();
   }, []);
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
+    return <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="flex-1 pt-16 flex items-center justify-center">
           <div className="text-center">
@@ -58,12 +50,9 @@ const Dashboard = () => {
             <p className="text-muted-foreground">Загружаем панель управления...</p>
           </div>
         </main>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
+  return <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
       <main className="flex-1 pt-16">
@@ -103,7 +92,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-6 h-6 text-primary" />
-                  <h2 className="text-2xl font-bold text-foreground">Предстоящие тренировки</h2>
+                  <h2 className="text-foreground text-3xl font-semibold">Расписание занятий</h2>
                 </div>
                 <Link to="/schedule">
                   <Button variant="outline" size="sm">
@@ -113,18 +102,12 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {upcomingTrainings.length > 0 ? (
-                  upcomingTrainings.map((training) => (
-                    <ScheduleCard key={training.id} session={training} />
-                  ))
-                ) : (
-                  <div className="bg-card rounded-lg border border-border p-8 text-center">
+                {upcomingTrainings.length > 0 ? upcomingTrainings.map(training => <ScheduleCard key={training.id} session={training} />) : <div className="bg-card rounded-lg border border-border p-8 text-center">
                     <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
                       На сегодня тренировок не запланировано
                     </p>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
 
@@ -143,18 +126,12 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                {recentAnnouncements.length > 0 ? (
-                  recentAnnouncements.map((announcement) => (
-                    <AnnouncementCard key={announcement.id} announcement={announcement} />
-                  ))
-                ) : (
-                  <div className="bg-card rounded-lg border border-border p-6 text-center">
+                {recentAnnouncements.length > 0 ? recentAnnouncements.map(announcement => <AnnouncementCard key={announcement.id} announcement={announcement} />) : <div className="bg-card rounded-lg border border-border p-6 text-center">
                     <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground text-sm">
                       Новых объявлений нет
                     </p>
-                  </div>
-                )}
+                  </div>}
               </div>
 
               {/* Быстрые действия */}
@@ -171,13 +148,11 @@ const Dashboard = () => {
                       Посмотреть расписание
                     </Button>
                   </Link>
-                  {(userProfile?.role === 'trainer' || userProfile?.role === 'admin') && (
-                    <Link to="/admin" className="block">
+                  {(userProfile?.role === 'trainer' || userProfile?.role === 'admin') && <Link to="/admin" className="block">
                       <Button variant="secondary" size="sm" className="w-full justify-start">
                         Админ панель
                       </Button>
-                    </Link>
-                  )}
+                    </Link>}
                 </div>
               </div>
             </div>
@@ -186,8 +161,6 @@ const Dashboard = () => {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
