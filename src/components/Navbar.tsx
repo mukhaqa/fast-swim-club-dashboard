@@ -28,9 +28,9 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border shadow-sm safe-area-inset">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between items-center" style={{ minHeight: '64px', paddingTop: 'env(safe-area-inset-top)' }}>
           {/* Логотип и название */}
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg">
@@ -48,7 +48,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-1">
             <Link
               to="/dashboard"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center touch-manipulation ${
                 isActive('/dashboard')
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -98,13 +98,13 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Кнопка выхода */}
+          {/* Кнопка выхода - адаптирована для сенсорного управления */}
           <div className="flex items-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 min-h-[44px] min-w-[44px] p-3 touch-manipulation"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Выйти</span>

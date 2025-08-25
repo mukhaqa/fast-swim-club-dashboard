@@ -13,7 +13,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-card border-t border-border mt-auto">
+    <footer className="bg-card border-t border-border mt-auto safe-area-inset" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Логотип и описание */}
