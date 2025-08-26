@@ -1,34 +1,34 @@
 /**
  * Страница расписания тренировок FastSwim приложения
- * Показывает список всех тренировок с возможностью фильтрации по неделям
+ * Мобильно-адаптированная страница с уведомлениями и напоминаниями
  */
 
 import { useEffect, useState } from "react";
-import { getWeeklyTrainings, TrainingSession } from "@/lib/api";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import ScheduleCard from "@/components/ScheduleCard";
-import Button from "@/components/Button";
-import { Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { getWeeklyTrainings, TrainingSession } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Calendar, ChevronLeft, ChevronRight, Filter, Users, MapPin, User, Clock, Bell, AlertCircle, CheckCircle2 } from "lucide-react";
 
-/**
- * Страница расписания тренировок
- */
 const Schedule = () => {
   const [trainings, setTrainings] = useState<TrainingSession[]>([]);
   const [filteredTrainings, setFilteredTrainings] = useState<TrainingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedWeek, setSelectedWeek] = useState<number>(0); // 0 = текущая неделя
-  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [selectedWeek, setSelectedWeek] = useState(0);
+  const [selectedGroup, setSelectedGroup] = useState<string>("all");
+  const [reminders, setReminders] = useState<{[key: string]: boolean}>({});
+  const { toast } = useToast();
 
-  // Загружаем тренировки при монтировании компонента
   useEffect(() => {
     const loadTrainings = async () => {
       try {
         setIsLoading(true);
         const data = await getWeeklyTrainings();
         setTrainings(data);
-        setFilteredTrainings(data);
       } catch (error) {
         console.error('Ошибка загрузки расписания:', error);
       } finally {
@@ -39,29 +39,25 @@ const Schedule = () => {
     loadTrainings();
   }, []);
 
-  // Фильтруем тренировки при изменении фильтров
   useEffect(() => {
     let filtered = [...trainings];
 
-    // Фильтр по группе
-    if (selectedGroup !== 'all') {
+    if (selectedGroup !== "all") {
       filtered = filtered.filter(training => training.group === selectedGroup);
     }
 
     setFilteredTrainings(filtered);
   }, [trainings, selectedGroup]);
 
-  // Получаем уникальные группы для фильтра
   const uniqueGroups = Array.from(new Set(trainings.map(training => training.group)));
 
-  // Форматируем период недели для отображения
   const getWeekPeriod = (weekOffset: number) => {
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1 + (weekOffset * 7)); // Понедельник
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1 + (weekOffset * 7));
     
     const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // Воскресенье
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
 
     const formatDate = (date: Date) => date.toLocaleDateString('ru-RU', { 
       day: 'numeric', 
@@ -78,155 +74,201 @@ const Schedule = () => {
     return weekOffset > 0 ? `Через ${weekOffset} недель` : `${Math.abs(weekOffset)} недель назад`;
   };
 
+  const toggleReminder = (sessionId: string) => {
+    setReminders(prev => ({
+      ...prev,
+      [sessionId]: !prev[sessionId]
+    }));
+    
+    const session = trainings.find(t => t.id === sessionId);
+    if (session?.isPersonal) {
+      toast({
+        title: reminders[sessionId] ? "Напоминание отключено" : "Напоминание включено",
+        description: `Персональная тренировка ${session.date} в ${session.time}`,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Navbar />
-        <main className="flex-1 pt-16 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Загружаем расписание...</p>
-          </div>
-        </main>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Загружаем расписание...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-      
-      <main className="flex-1 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Заголовок страницы */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-2">
-              <Calendar className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Расписание тренировок</h1>
+    <div className="px-4 py-4 pb-24">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Расписание</h1>
+        <p className="text-muted-foreground">Ваши тренировки и уведомления</p>
+      </div>
+
+      {/* Панель управления */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedWeek(Math.max(0, selectedWeek - 1))}
+                disabled={selectedWeek === 0}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <div className="text-center">
+                <h2 className="font-semibold text-foreground">
+                  {getWeekTitle(selectedWeek)}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {getWeekPeriod(selectedWeek)}
+                </p>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedWeek(selectedWeek + 1)}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-            <p className="text-muted-foreground">
-              Планируйте свои тренировки и следите за расписанием занятий
-            </p>
           </div>
 
-          {/* Панель управления */}
-          <div className="bg-card rounded-lg border border-border p-6 mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-              {/* Навигация по неделям */}
-              <div className="flex items-center space-x-4">
+          <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Выберите группу" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все группы</SelectItem>
+              {uniqueGroups.map(group => (
+                <SelectItem key={group} value={group}>{group}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* Список тренировок */}
+      <div className="space-y-4">
+        {filteredTrainings.length > 0 ? (
+          filteredTrainings.map(training => (
+            <Card key={training.id}>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{training.type}</h3>
+                    <p className="text-sm text-muted-foreground">{training.group}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {training.status === 'cancelled' && (
+                      <Badge variant="destructive" className="text-xs">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Отменена
+                      </Badge>
+                    )}
+                    {training.status === 'rescheduled' && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Перенесена
+                      </Badge>
+                    )}
+                    {training.isPersonal && (
+                      <Badge variant="outline" className="text-xs">
+                        Персональная
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(training.date).toLocaleDateString('ru-RU', { 
+                      weekday: 'long', 
+                      day: 'numeric', 
+                      month: 'long' 
+                    })} в {training.time}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{training.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span>{training.trainer}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-4">
+                  <Button size="sm" className="flex-1 mr-2">
+                    Записаться
+                  </Button>
+                  
+                  {training.isPersonal && (
+                    <div className="flex items-center space-x-2">
+                      <Bell className={`w-4 h-4 ${reminders[training.id] ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <Switch
+                        checked={reminders[training.id] || false}
+                        onCheckedChange={() => toggleReminder(training.id)}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {training.status === 'cancelled' && (
+                  <div className="mt-3 p-2 bg-destructive/10 rounded-md">
+                    <p className="text-xs text-destructive">
+                      Тренировка отменена. Свяжитесь с тренером для переноса.
+                    </p>
+                  </div>
+                )}
+
+                {training.status === 'rescheduled' && (
+                  <div className="mt-3 p-2 bg-orange-100 dark:bg-orange-900/20 rounded-md">
+                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                      Тренировка перенесена. Проверьте новое время в уведомлениях.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Тренировок не найдено
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                На выбранную неделю и группу тренировки не запланированы
+              </p>
+              <div className="flex flex-col gap-3">
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedWeek(prev => prev - 1)}
+                  onClick={() => setSelectedGroup("all")}
+                  disabled={selectedGroup === "all"}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  Показать все группы
                 </Button>
-                
-                <div className="text-center min-w-0 flex-1 lg:min-w-64">
-                  <div className="font-semibold text-foreground">
-                    {getWeekTitle(selectedWeek)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {getWeekPeriod(selectedWeek)}
-                  </div>
-                </div>
-
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedWeek(prev => prev + 1)}
+                  onClick={() => setSelectedWeek(0)}
+                  disabled={selectedWeek === 0}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  Текущая неделя
                 </Button>
               </div>
-
-              {/* Фильтр по группам */}
-              <div className="flex items-center space-x-3">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="all">Все группы</option>
-                  {uniqueGroups.map(group => (
-                    <option key={group} value={group}>{group}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Список тренировок */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredTrainings.length > 0 ? (
-              filteredTrainings.map((training) => (
-                <ScheduleCard key={training.id} session={training} />
-              ))
-            ) : (
-              <div className="col-span-full">
-                <div className="bg-card rounded-lg border border-border p-12 text-center">
-                  <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    Тренировок не найдено
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    {selectedGroup === 'all' 
-                      ? 'На выбранную неделю тренировки не запланированы'
-                      : `Для группы "${selectedGroup}" на выбранную неделю тренировок нет`
-                    }
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedWeek(0)}
-                    >
-                      Текущая неделя
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedGroup('all')}
-                    >
-                      Все группы
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Статистика */}
-          {trainings.length > 0 && (
-            <div className="mt-8 bg-card rounded-lg border border-border p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Статистика</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{trainings.length}</div>
-                  <div className="text-sm text-muted-foreground">Всего тренировок</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">{uniqueGroups.length}</div>
-                  <div className="text-sm text-muted-foreground">Групп</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {Array.from(new Set(trainings.map(t => t.trainer))).length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Тренеров</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">
-                    {Array.from(new Set(trainings.map(t => t.location))).length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Локаций</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-
-      <Footer />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

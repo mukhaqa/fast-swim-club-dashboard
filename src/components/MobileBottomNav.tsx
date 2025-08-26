@@ -17,9 +17,9 @@ const MobileBottomNav = () => {
 
   const navItems = [
     {
-      path: '/dashboard',
-      icon: Home,
-      label: 'Главная',
+      path: '/profile',
+      icon: User,
+      label: 'Кабинет',
     },
     {
       path: '/schedule',
@@ -32,14 +32,9 @@ const MobileBottomNav = () => {
       label: 'Новости',
     },
     {
-      path: '/profile',
-      icon: User,
-      label: 'Профиль',
-    },
-    {
-      path: '/admin',
+      path: '/settings',
       icon: Settings,
-      label: 'Админ',
+      label: 'Настройки',
     },
   ];
 

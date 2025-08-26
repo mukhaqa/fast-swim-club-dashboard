@@ -39,6 +39,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     name: 'Александр Михайлов',
     email: 'alexander@example.com',
     group: 'Средний уровень',
+    trainer: 'Мария Козлова',
+    age: 16,
     joinDate: '2024-01-15',
     role: 'swimmer'
   };
