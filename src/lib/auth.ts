@@ -29,9 +29,12 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Выход пользователя (алиас для signOut)
+ * Выход пользователя
  */
-export const logout = signOut;
+export async function logout(): Promise<void> {
+  console.log('Пользователь вышел из системы');
+  localStorage.removeItem('fastswim-auth');
+}
 
 /**
  * Получить текущего пользователя
