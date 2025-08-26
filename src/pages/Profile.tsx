@@ -4,6 +4,8 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, logout } from "@/lib/auth";
 import { getUserProfile, getUserAttendance, getMakeupGroups, getPaymentInfo, getAdminStats, addTrainerNote, UserProfile, AttendanceRecord, MakeupGroup, PaymentInfo, AdminStats, TrainerNote } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +32,12 @@ import {
   UserCheck,
   AlertCircle,
   MessageSquare,
-  Loader2
+  Loader2,
+  LogOut
 } from "lucide-react";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [makeupGroups, setMakeupGroups] = useState<MakeupGroup[]>([]);
@@ -44,6 +48,14 @@ const Profile = () => {
   const [trainerNote, setTrainerNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
+
+  // Проверяем авторизацию
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -78,7 +90,9 @@ const Profile = () => {
       }
     };
 
-    loadProfileData();
+    if (isAuthenticated()) {
+      loadProfileData();
+    }
   }, [toast]);
 
   const handleAddTrainerNote = async () => {
@@ -158,22 +172,30 @@ const Profile = () => {
         <TabsList className={`grid w-full mb-6 ${
           (profile.role === 'trainer' || profile.role === 'admin') ? 'grid-cols-4' : 'grid-cols-3'
         }`}>
-          <TabsTrigger value="profile" className="text-xs flex flex-col items-center gap-1 py-3">
-            <User className="w-4 h-4" />
-            <span>Профиль</span>
+          <TabsTrigger value="profile" className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col items-center gap-1 py-2">
+              <User className="w-4 h-4" />
+              <span className="text-xs">Профиль</span>
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="text-xs flex flex-col items-center gap-1 py-3">
-            <Calendar className="w-4 h-4" />
-            <span>Посещения</span>
+          <TabsTrigger value="attendance" className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col items-center gap-1 py-2">
+              <Calendar className="w-4 h-4" />
+              <span className="text-xs">Посещения</span>
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="payment" className="text-xs flex flex-col items-center gap-1 py-3">
-            <CreditCard className="w-4 h-4" />
-            <span>Оплата</span>
+          <TabsTrigger value="payment" className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col items-center gap-1 py-2">
+              <CreditCard className="w-4 h-4" />
+              <span className="text-xs">Оплата</span>
+            </div>
           </TabsTrigger>
           {(profile.role === 'trainer' || profile.role === 'admin') && (
-            <TabsTrigger value="admin" className="text-xs flex flex-col items-center gap-1 py-3">
-              <BarChart3 className="w-4 h-4" />
-              <span>Админ</span>
+            <TabsTrigger value="admin" className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col items-center gap-1 py-2">
+                <BarChart3 className="w-4 h-4" />
+                <span className="text-xs">Админ</span>
+              </div>
             </TabsTrigger>
           )}
         </TabsList>

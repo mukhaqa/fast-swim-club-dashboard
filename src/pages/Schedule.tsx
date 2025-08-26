@@ -1,6 +1,6 @@
 /**
  * Страница расписания тренировок FastSwim приложения
- * Мобильно-адаптированная страница с табличным представлением и фильтрами
+ * Мобильно-адаптированная страница со списком тренировок на день и фильтрами
  */
 
 import { useEffect, useState } from "react";
@@ -10,14 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, ChevronLeft, ChevronRight, Filter, Users, MapPin, User, Clock, Bell, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Calendar, Filter, MapPin, User, Clock, Bell, AlertCircle } from "lucide-react";
 
 const Schedule = () => {
   const [trainings, setTrainings] = useState<TrainingSession[]>([]);
   const [filteredTrainings, setFilteredTrainings] = useState<TrainingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTrainer, setSelectedTrainer] = useState<string>("all");
   const [selectedPool, setSelectedPool] = useState<string>("all");
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
@@ -28,7 +29,8 @@ const Schedule = () => {
     const loadTrainings = async () => {
       try {
         setIsLoading(true);
-        const data = await getMonthlyTrainings(currentDate.getFullYear(), currentDate.getMonth() + 1);
+        const date = new Date(selectedDate);
+        const data = await getMonthlyTrainings(date.getFullYear(), date.getMonth() + 1);
         setTrainings(data);
       } catch (error) {
         console.error('Ошибка загрузки расписания:', error);
@@ -38,10 +40,10 @@ const Schedule = () => {
     };
 
     loadTrainings();
-  }, [currentDate]);
+  }, [selectedDate]);
 
   useEffect(() => {
-    let filtered = [...trainings];
+    let filtered = trainings.filter(training => training.date === selectedDate);
 
     if (selectedTrainer !== "all") {
       filtered = filtered.filter(training => training.trainer === selectedTrainer);
@@ -54,48 +56,11 @@ const Schedule = () => {
     }
 
     setFilteredTrainings(filtered);
-  }, [trainings, selectedTrainer, selectedPool, selectedGroup]);
+  }, [trainings, selectedDate, selectedTrainer, selectedPool, selectedGroup]);
 
   const uniqueTrainers = Array.from(new Set(trainings.map(training => training.trainer)));
   const uniquePools = Array.from(new Set(trainings.map(training => training.location)));
   const uniqueGroups = Array.from(new Set(trainings.map(training => training.group)));
-
-  const getDaysInMonth = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
-    const days = [];
-    
-    // Добавляем пустые дни в начале месяца
-    for (let i = 0; i < (startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1); i++) {
-      days.push(null);
-    }
-    
-    // Добавляем дни месяца
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-    
-    return days;
-  };
-
-  const getTrainingsForDay = (day: number) => {
-    if (!day) return [];
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return filteredTrainings.filter(training => training.date === dateStr);
-  };
-
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-  };
 
   const toggleReminder = (sessionId: string) => {
     setReminders(prev => ({
@@ -112,12 +77,15 @@ const Schedule = () => {
     }
   };
 
-  const monthNames = [
-    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
-  ];
-
-  const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      weekday: 'long'
+    });
+  };
 
   if (isLoading) {
     return (
@@ -134,7 +102,7 @@ const Schedule = () => {
     <div className="px-4 py-4 pb-24">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground mb-2">Расписание</h1>
-        <p className="text-muted-foreground">Тренировки на месяц</p>
+        <p className="text-muted-foreground">Тренировки на {formatDate(selectedDate)}</p>
       </div>
 
       {/* Фильтры */}
@@ -147,6 +115,16 @@ const Schedule = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Дата</label>
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
             <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
               <SelectTrigger>
                 <SelectValue placeholder="Выберите тренера" />
@@ -201,177 +179,88 @@ const Schedule = () => {
         </CardContent>
       </Card>
 
-      {/* Навигация по месяцам */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            
-            <h2 className="font-semibold text-lg">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </h2>
-            
-            <Button variant="outline" size="sm" onClick={goToNextMonth}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Календарь */}
-      <Card>
-        <CardContent className="p-2">
-          {/* Заголовки дней недели */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {dayNames.map(day => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground p-2">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Дни месяца */}
-          <div className="grid grid-cols-7 gap-1">
-            {getDaysInMonth().map((day, index) => {
-              const dayTrainings = day ? getTrainingsForDay(day) : [];
-              const isToday = day && 
-                new Date().getDate() === day && 
-                new Date().getMonth() === currentDate.getMonth() && 
-                new Date().getFullYear() === currentDate.getFullYear();
-
-              return (
-                <div
-                  key={index}
-                  className={`min-h-[60px] p-1 border rounded-md ${
-                    !day ? 'bg-muted/30' : ''
-                  } ${
-                    isToday ? 'bg-primary/10 border-primary' : 'border-border'
-                  }`}
-                >
-                  {day && (
-                    <>
-                      <div className={`text-xs font-medium mb-1 ${
-                        isToday ? 'text-primary' : 'text-foreground'
-                      }`}>
-                        {day}
-                      </div>
-                      <div className="space-y-1">
-                        {dayTrainings.slice(0, 2).map(training => (
-                          <div
-                            key={training.id}
-                            className={`text-xs p-1 rounded text-center ${
-                              training.status === 'cancelled' 
-                                ? 'bg-destructive/20 text-destructive' 
-                                : training.status === 'rescheduled'
-                                ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400'
-                                : training.isPersonal
-                                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                                : 'bg-primary/20 text-primary'
-                            }`}
-                          >
-                            <div className="font-medium">{training.time}</div>
-                            <div className="truncate">{training.group}</div>
-                            {training.isPersonal && (
-                              <div className="flex items-center justify-center mt-1">
-                                <Bell 
-                                  className={`w-3 h-3 ${
-                                    reminders[training.id] ? 'text-primary' : 'text-muted-foreground'
-                                  }`} 
-                                />
-                                <Switch
-                                  checked={reminders[training.id] || false}
-                                  onCheckedChange={() => toggleReminder(training.id)}
-                                  className="ml-1 scale-75"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {dayTrainings.length > 2 && (
-                          <div className="text-xs text-muted-foreground text-center">
-                            +{dayTrainings.length - 2} еще
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Список тренировок на сегодня */}
-      {(() => {
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const todayTrainings = filteredTrainings.filter(training => training.date === todayStr);
-        
-        if (todayTrainings.length > 0) {
-          return (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  Сегодня
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {todayTrainings.map(training => (
-                  <div key={training.id} className="p-3 border rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 className="font-medium">{training.type}</h4>
-                        <p className="text-sm text-muted-foreground">{training.group}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {training.status === 'cancelled' && (
-                          <Badge variant="destructive" className="text-xs">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Отменена
-                          </Badge>
-                        )}
-                        {training.status === 'rescheduled' && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Перенесена
-                          </Badge>
-                        )}
-                        {training.isPersonal && (
-                          <Badge variant="outline" className="text-xs">
-                            Персональная
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-4">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {training.time}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {training.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {training.trainer}
-                        </span>
-                      </div>
-                    </div>
+      {/* Список тренировок */}
+      <div className="space-y-4">
+        {filteredTrainings.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Нет тренировок</h3>
+              <p className="text-muted-foreground">На выбранную дату тренировки не найдены</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredTrainings.map(training => (
+            <Card key={training.id}>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground">{training.type}</h3>
+                    <p className="text-muted-foreground">{training.group}</p>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-2">
+                    {training.status === 'cancelled' && (
+                      <Badge variant="destructive" className="text-xs">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Отменена
+                      </Badge>
+                    )}
+                    {training.status === 'rescheduled' && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Перенесена
+                      </Badge>
+                    )}
+                    {training.isPersonal && (
+                      <Badge variant="outline" className="text-xs">
+                        Персональная
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">Время:</span>
+                    <span>{training.time}</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span className="font-medium">Бассейн:</span>
+                    <span>{training.location}</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span className="font-medium">Тренер:</span>
+                    <span>{training.trainer}</span>
+                  </div>
+                </div>
+
+                {training.isPersonal && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Напоминание</span>
+                      </div>
+                      <Switch
+                        checked={reminders[training.id] || false}
+                        onCheckedChange={() => toggleReminder(training.id)}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Получать уведомления о персональной тренировке
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          );
-        }
-        return null;
-      })()}
+          ))
+        )}
+      </div>
     </div>
   );
 };

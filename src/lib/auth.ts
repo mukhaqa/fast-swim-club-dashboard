@@ -25,8 +25,13 @@ export async function signInWithEmail(email: string): Promise<{ success: boolean
 export async function signOut(): Promise<void> {
   // Мок выхода
   console.log('Пользователь вышел из системы');
-  // В реальности здесь будет очистка сессии Supabase
+  localStorage.removeItem('fastswim-auth');
 }
+
+/**
+ * Выход пользователя (алиас для signOut)
+ */
+export const logout = signOut;
 
 /**
  * Получить текущего пользователя
@@ -49,9 +54,9 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 /**
  * Проверить, авторизован ли пользователь
  */
-export async function isAuthenticated(): Promise<boolean> {
-  // Мок - всегда авторизован для демонстрации
-  return true;
+export function isAuthenticated(): boolean {
+  // Проверяем localStorage для демонстрации
+  return localStorage.getItem('fastswim-auth') !== null;
 }
 
 /**

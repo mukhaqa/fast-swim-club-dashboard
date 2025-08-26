@@ -4,29 +4,25 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { logout } from "@/lib/auth";
 import { 
   Settings2, 
   Bell, 
   Moon, 
   Sun, 
-  Volume2, 
   Languages, 
-  Shield, 
   HelpCircle, 
   LogOut, 
   Smartphone,
   Clock,
   Calendar,
-  MessageSquare,
-  Vibrate,
-  Save
+  MessageSquare
 } from "lucide-react";
 
 interface SettingsData {
@@ -36,25 +32,19 @@ interface SettingsData {
     announcements: boolean;
     payments: boolean;
     reminders: boolean;
-    sound: boolean;
-    vibration: boolean;
   };
   appearance: {
     theme: 'light' | 'dark' | 'system';
     language: 'ru' | 'en';
   };
-  privacy: {
-    profileVisible: boolean;
-    shareStats: boolean;
-  };
   app: {
     autoSync: boolean;
     offlineMode: boolean;
-    soundVolume: number;
   };
 }
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<SettingsData>({
     notifications: {
       enabled: true,
@@ -62,25 +52,17 @@ const Settings = () => {
       announcements: true,
       payments: true,
       reminders: true,
-      sound: true,
-      vibration: true,
     },
     appearance: {
       theme: 'system',
       language: 'ru',
     },
-    privacy: {
-      profileVisible: true,
-      shareStats: false,
-    },
     app: {
       autoSync: true,
       offlineMode: false,
-      soundVolume: 80,
     }
   });
   
-  const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
   // Загружаем настройки из localStorage
@@ -106,61 +88,30 @@ const Settings = () => {
       }
       current[keys[keys.length - 1]] = value;
       
+      // Автосохранение
+      setTimeout(() => {
+        try {
+          localStorage.setItem('fastswim-settings', JSON.stringify(newSettings));
+          toast({
+            title: "Настройки обновлены",
+            description: "Изменения автоматически сохранены",
+          });
+        } catch (error) {
+          console.error('Ошибка сохранения настроек:', error);
+        }
+      }, 100);
+      
       return newSettings;
     });
-    setHasChanges(true);
   };
 
-  const saveSettings = () => {
-    try {
-      localStorage.setItem('fastswim-settings', JSON.stringify(settings));
-      setHasChanges(false);
-      toast({
-        title: "Настройки сохранены",
-        description: "Ваши настройки успешно применены",
-      });
-    } catch (error) {
-      console.error('Ошибка сохранения настроек:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось сохранить настройки",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const resetSettings = () => {
-    const defaultSettings: SettingsData = {
-      notifications: {
-        enabled: true,
-        training: true,
-        announcements: true,
-        payments: true,
-        reminders: true,
-        sound: true,
-        vibration: true,
-      },
-      appearance: {
-        theme: 'system',
-        language: 'ru',
-      },
-      privacy: {
-        profileVisible: true,
-        shareStats: false,
-      },
-      app: {
-        autoSync: true,
-        offlineMode: false,
-        soundVolume: 80,
-      }
-    };
-    
-    setSettings(defaultSettings);
-    setHasChanges(true);
+  const handleLogout = () => {
+    logout();
     toast({
-      title: "Настройки сброшены",
-      description: "Применены настройки по умолчанию",
+      title: "Выход выполнен",
+      description: "До свидания!",
     });
+    navigate('/login');
   };
 
   return (
@@ -231,46 +182,6 @@ const Settings = () => {
                     onCheckedChange={(checked) => updateSetting('notifications.reminders', checked)}
                   />
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Volume2 className="w-4 h-4 text-muted-foreground" />
-                    <span>Звук</span>
-                  </div>
-                  <Switch
-                    checked={settings.notifications.sound}
-                    onCheckedChange={(checked) => updateSetting('notifications.sound', checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Vibrate className="w-4 h-4 text-muted-foreground" />
-                    <span>Вибрация</span>
-                  </div>
-                  <Switch
-                    checked={settings.notifications.vibration}
-                    onCheckedChange={(checked) => updateSetting('notifications.vibration', checked)}
-                  />
-                </div>
-
-                {settings.notifications.sound && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Громкость звука</label>
-                    <Slider
-                      value={[settings.app.soundVolume]}
-                      onValueChange={([value]) => updateSetting('app.soundVolume', value)}
-                      max={100}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Тихо</span>
-                      <span>{settings.app.soundVolume}%</span>
-                      <span>Громко</span>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </CardContent>
@@ -310,12 +221,6 @@ const Settings = () => {
                       <span>Темная</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="system">
-                    <div className="flex items-center space-x-2">
-                      <Smartphone className="w-4 h-4" />
-                      <span>Системная</span>
-                    </div>
-                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -348,41 +253,6 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Приватность */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="w-5 h-5" />
-              <span>Приватность</span>
-            </CardTitle>
-            <CardDescription>
-              Управление конфиденциальностью данных
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Видимость профиля</p>
-                <p className="text-sm text-muted-foreground">Позволить другим видеть ваш профиль</p>
-              </div>
-              <Switch
-                checked={settings.privacy.profileVisible}
-                onCheckedChange={(checked) => updateSetting('privacy.profileVisible', checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Делиться статистикой</p>
-                <p className="text-sm text-muted-foreground">Позволить использовать вашу статистику для улучшения сервиса</p>
-              </div>
-              <Switch
-                checked={settings.privacy.shareStats}
-                onCheckedChange={(checked) => updateSetting('privacy.shareStats', checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Приложение */}
         <Card>
@@ -437,41 +307,17 @@ const Settings = () => {
               <MessageSquare className="w-4 h-4 mr-2" />
               Обратная связь
             </Button>
-            <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive">
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Выход из аккаунта
             </Button>
           </CardContent>
         </Card>
 
-        {/* Кнопки управления */}
-        <div className="flex space-x-3">
-          <Button 
-            onClick={saveSettings} 
-            disabled={!hasChanges}
-            className="flex-1"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Сохранить
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={resetSettings}
-          >
-            Сбросить
-          </Button>
-        </div>
-
-        {hasChanges && (
-          <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 text-orange-600 dark:text-orange-400">
-                <Settings2 className="w-4 h-4" />
-                <span className="text-sm">У вас есть несохраненные изменения</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

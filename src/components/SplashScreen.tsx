@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Waves } from 'lucide-react';
 
 interface SplashScreenProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 /**
@@ -20,7 +20,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     // Показываем splash screen в течение 2 секунд
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onComplete, 300); // Дополнительная задержка для анимации исчезновения
+      if (onComplete) {
+        setTimeout(onComplete, 300);
+      }
     }, 2000);
 
     return () => clearTimeout(timer);
