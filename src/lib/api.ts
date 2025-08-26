@@ -130,6 +130,55 @@ export async function getUpcomingTrainings(): Promise<TrainingSession[]> {
 }
 
 /**
+ * Получить все тренировки на месяц
+ */
+export async function getMonthlyTrainings(year: number, month: number): Promise<TrainingSession[]> {
+  // Имитация API запроса
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const trainings: TrainingSession[] = [];
+      const daysInMonth = new Date(year, month, 0).getDate();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // Добавляем тренировки случайным образом
+        if (Math.random() > 0.4) {
+          const numTrainings = Math.floor(Math.random() * 3) + 1;
+          
+          for (let i = 0; i < numTrainings; i++) {
+            const times = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+            const groups = ['Начинающие', 'Средний уровень', 'Продвинутые', 'Детская группа'];
+            const locations = ['Бассейн №1', 'Бассейн №2', 'Открытый бассейн'];
+            const trainers = ['Анна Иванова', 'Петр Сидоров', 'Мария Кузнецова'];
+            const types = ['Техника плавания', 'Выносливость', 'Скорость', 'Персональная тренировка'];
+            
+            const isPersonal = Math.random() > 0.8;
+            let status: 'scheduled' | 'cancelled' | 'rescheduled' = 'scheduled';
+            if (Math.random() > 0.9) status = 'cancelled';
+            else if (Math.random() > 0.95) status = 'rescheduled';
+            
+            trainings.push({
+              id: `${date}-${i}`,
+              date,
+              time: times[Math.floor(Math.random() * times.length)],
+              location: locations[Math.floor(Math.random() * locations.length)],
+              group: groups[Math.floor(Math.random() * groups.length)],
+              trainer: trainers[Math.floor(Math.random() * trainers.length)],
+              type: isPersonal ? 'Персональная тренировка' : types[Math.floor(Math.random() * types.length)],
+              isPersonal,
+              status
+            });
+          }
+        }
+      }
+      
+      resolve(trainings.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)));
+    }, 1000);
+  });
+}
+
+/**
  * Получить все тренировки на неделю
  */
 export async function getWeeklyTrainings(): Promise<TrainingSession[]> {

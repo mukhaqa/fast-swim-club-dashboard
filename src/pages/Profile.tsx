@@ -155,23 +155,25 @@ const Profile = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
-          <TabsTrigger value="profile" className="text-xs">
-            <User className="w-4 h-4 mr-1" />
-            Профиль
+        <TabsList className={`grid w-full mb-6 ${
+          (profile.role === 'trainer' || profile.role === 'admin') ? 'grid-cols-4' : 'grid-cols-3'
+        }`}>
+          <TabsTrigger value="profile" className="text-xs flex flex-col items-center gap-1 py-3">
+            <User className="w-4 h-4" />
+            <span>Профиль</span>
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="text-xs">
-            <Calendar className="w-4 h-4 mr-1" />
-            Посещения
+          <TabsTrigger value="attendance" className="text-xs flex flex-col items-center gap-1 py-3">
+            <Calendar className="w-4 h-4" />
+            <span>Посещения</span>
           </TabsTrigger>
-          <TabsTrigger value="payment" className="text-xs">
-            <CreditCard className="w-4 h-4 mr-1" />
-            Оплата
+          <TabsTrigger value="payment" className="text-xs flex flex-col items-center gap-1 py-3">
+            <CreditCard className="w-4 h-4" />
+            <span>Оплата</span>
           </TabsTrigger>
           {(profile.role === 'trainer' || profile.role === 'admin') && (
-            <TabsTrigger value="admin" className="text-xs">
-              <BarChart3 className="w-4 h-4 mr-1" />
-              Админ
+            <TabsTrigger value="admin" className="text-xs flex flex-col items-center gap-1 py-3">
+              <BarChart3 className="w-4 h-4" />
+              <span>Админ</span>
             </TabsTrigger>
           )}
         </TabsList>

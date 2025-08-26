@@ -13,7 +13,7 @@ import Schedule from "./pages/Schedule";
 import Announcements from "./pages/Announcements";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
-import Admin from "./pages/Admin";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,11 +23,13 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <div className="min-h-screen bg-background flex flex-col">
-          {/* Верхняя навигация */}
-          <Navbar />
+          {/* Верхняя навигация - скрыта на мобильных */}
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
           
           {/* Основной контент с отступами для мобильной навигации */}
-          <main className="flex-1 pt-16 md:pt-20 pb-20 md:pb-8">
+          <main className="flex-1 md:pt-20 pb-20 md:pb-8 safe-area-top">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
@@ -36,7 +38,6 @@ const App = () => (
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
